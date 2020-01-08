@@ -1,0 +1,75 @@
+
+  cwiczenie_12___joystick.cpp
+ 
+  Created 08.01.2020 073530
+   Author KTM
+  
+
+
+#define F_CPU 16000000L
+#include avrio.h
+#include utildelay.h
+#include avrinterrupt.h
+
+void setup(void)
+{
+	DDRC &= ~(10);
+	DDRC &= ~(11);
+	DDRC = (12);
+	DDRC = (13);
+	DDRC = (14);
+	DDRC = (15);
+	
+	ADMUX = (1REFS0);
+	ADCSRA = (1ADPS0)  (1ADPS2)  (1ADEN);
+}
+
+int wynik;
+void loop(void)
+{	
+	ADMUX =(1MUX0);
+	ADCSRA =(1ADSC);
+	_delay_ms(1);
+	
+	int y = ADC;
+	
+	ADMUX &= ~(1MUX0);
+	ADCSRA =(1ADSC);
+	_delay_ms(1);
+	
+	int x = ADC;
+	
+	if ( x  768 && x  256 && y 768 && y  256){
+		PORTC = (12);
+		PORTC = (13);
+		PORTC = (14);
+		PORTC = (15);
+	}
+	
+	w lewo
+	if(0x && x256 && y512){
+		PORTC &= ~(12);
+	}
+	
+	w prawo
+	if(768x && x1024 && y512){
+		PORTC &= ~(13);
+	}
+	w góre
+	if(x512 && 768y && y1024){
+		PORTC &= ~(14);
+	}
+	
+	w dó³
+	if( x512 && 0y && y256){
+		PORTC &= ~(15);
+	}
+}
+
+int main(void)
+{
+	setup();
+	while(1) loop();
+	return 0;
+	
+}

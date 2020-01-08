@@ -1,0 +1,48 @@
+#define F_CPU 16000000L
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+
+int bright = 0;
+void setup(void)
+{
+	DDRD |= (1<<6);
+	TCCR0A |= (1<<WGM01)|(1<<WGM00)|(1<<COM0A1);
+	TCCR0B |= (1<CS01)|(1<<CS00);
+	OCR0A = 0;
+	
+	DDRD |= (1<<5);
+	TCCR0A |= (1<<WGM01)|(1<<WGM00)|(1<<COM0B1);
+	TCCR0B |= (1<CS01)|(1<<CS00);
+	OCR0B = 0;
+	
+	DDRB |= (1<<3);
+	TCCR2A |= (1<<COM2A1)|(1<<WGM21)|(1<<WGM20);
+	TCCR2B |= (1<<CS22);
+	OCR2A=0;
+
+}
+
+void loop(void)
+{
+	for(bright = 0; bright < 255; bright++){
+		OCR0A = bright;
+		OCR0B = 255 - bright;
+		OCR2A = 128 - bright;
+		_delay_ms(20);
+	}
+	
+	for(bright = 255; bright > 0; bright--){
+		OCR0A = bright;
+		OCR0B = 255 + bright;
+		OCR2A = 128 + bright;
+		_delay_ms(20);
+	}
+}
+
+int main(void)
+{
+	setup();
+	while(1) loop();
+	return 0;
+}

@@ -1,0 +1,61 @@
+/*
+ * Programowanko.cpp
+ *
+ * Created: 16.10.2019 07:37:26
+ *  Author: KTM
+ */ 
+
+
+#define F_CPU 16000000L
+#include <avr/io.h>
+#include <util/delay.h>
+
+void setup(void)
+{
+	DDRB = DDRB | (1<<0);
+	_delay_ms(1000);
+	
+	DDRB = DDRB | (1<<1);
+	_delay_ms(1000);
+	
+	DDRB = DDRB | (1<<2);
+	_delay_ms(1000);
+	
+	DDRB = DDRB | (1<<3);
+	_delay_ms(1000);
+	
+	DDRB = DDRB | (1<<4);
+	_delay_ms(1000);
+	
+	DDRB = DDRB | (1<<5);
+	_delay_ms(1000);
+}
+
+void loop(void)
+{
+	PORTB = PORTB & ~(1<<0);
+	_delay_ms(200);
+	
+	PORTB = PORTB & ~(1<<1);
+	_delay_ms(200);
+	
+	PORTB = PORTB & ~(1<<2);
+	_delay_ms(200);
+	
+	PORTB = PORTB | (1<<2);
+	_delay_ms(200);
+	
+	PORTB = PORTB | (1<<3);
+	_delay_ms(200);
+	
+	PORTB = PORTB | (1<<4);
+	_delay_ms(200);
+}
+
+int main(void)
+{
+	setup();
+	while(1) loop();
+	return 0;
+	
+}

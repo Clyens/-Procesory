@@ -1,0 +1,146 @@
+#define F_CPU 16000000L
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+#include <avr/pgmspace.h>
+
+//lcd na PORTD
+//linia RS (0 - komendy; 1 - dane)
+//linia RW (0 - zapis do sterownika lcd; 1 - odczyt ze sterownika lcd)
+//linia E (0 - stan idle; 1 - stan aktywny)
+
+#define D7	7
+#define D6	6
+#define D5	5
+#define D4	4
+#define E	3
+#define RW	2
+#define RS	1
+
+void lcd_ini(void);
+void lcd_4bity(unsigned char bajt);
+void lcd_bajt(unsigned char bajt);
+
+
+void lcd_4bity(unsigned char bajt)
+{
+	if(bajt & 0x01)  PORTD |= (1<<D4);  else  PORTD  &= ~(1<<D4);
+	if(bajt & 0x02)  PORTD |= (1<<D5);  else  PORTD  &= ~(1<<D5);
+	if(bajt & 0x04)  PORTD |= (1<<D6);  else  PORTD  &= ~(1<<D6);
+	if(bajt & 0x08)  PORTD |= (1<<D7);  else  PORTD  &= ~(1<<D7);
+	
+}
+
+void lcd_bajt(unsigned char bajt)
+{
+	PORTD |= (1<<E);
+	lcd_4bity(bajt>>4);
+	PORTD  &= ~(1<<E);
+	_delay_us(5);
+	PORTD |= (1<<E);
+	lcd_4bity(bajt);
+	PORTD  &= ~(1<<E);
+	_delay_us(100);
+}
+
+
+void lcd_ini(void)
+{
+	PORTD |= (1<<E);
+	lcd_4bity(0x03);
+	PORTD  &= ~(1<<E);
+	_delay_ms(20);
+	
+	PORTD |= (1<<E);
+	lcd_4bity(0x03);
+	PORTD  &= ~(1<<E);
+	_delay_ms(5);
+	
+	PORTD |= (1<<E);
+	lcd_4bity(0x03);
+	PORTD  &= ~(1<<E);
+	_delay_ms(5);
+	
+	PORTD |= (1<<E);
+	lcd_4bity(0x02);
+	PORTD  &= ~(1<<E);
+	_delay_ms(2);
+	
+	
+	lcd_bajt(0b00101000);//Function set         0b001DNFxx
+	lcd_bajt(0b00010100);//Display cursor shift 0b0001SRxx
+	lcd_bajt(0b00001100);//Display ON/OFF       0b00001DCB
+	lcd_bajt(0b00000110);//Entry mode set       0b000001IS
+	lcd_bajt(0b00000001);//Display clear        0b00000001
+	_delay_ms(2);
+	lcd_bajt(0b10000000);//DDRAM set (kursor)   0b1AAAAAAA
+
+}
+
+
+void setup()
+{
+	//LCD na PORTD
+	DDRD |= (1<<D7)|(1<<D6)|(1<<D5)|(1<<D4)|(1<<E)|(1<<RW)|(1<<RS);
+	PORTD &= ~(1<<D7)& ~(1<<D6)& ~(1<<D5)& ~(1<<D4)& ~(1<<E)& ~(1<<RW)& ~(1<<RS);
+	_delay_ms(50);
+	lcd_ini();
+	
+
+	
+	ADMUX |= (1<<REFS0);
+	ADCSRA |= (1<<ADPS0) | (1<<ADPS2) | (1<<ADEN);
+	
+}
+
+int wynik = 0;
+int tysiace = 0;
+int setki = 0;
+int dziesiate = 0;
+int jednosci = 0;
+
+int A;
+int B;
+int C;
+int D;
+void loop(void)
+{
+	ADCSRA |=(1<<ADSC);
+	_delay_ms(1);
+	wynik = ADC;
+	
+	tysiace = wynik / 1000;
+	wynik = wynik % 1000;
+	
+	setki = wynik / 100;
+	wynik = wynik % 100;
+	
+	dziesiate = wynik / 10;
+	wynik = wynik % 10;
+	
+	jednosci = wynik / 1;
+	
+	A = 48 + tysiace;
+	B = 48 + setki;
+	C = 48 + dziesiate;
+	D = 48 + jednosci;
+	
+	PORTD &= ~(1<<RS);
+	lcd_bajt(128);
+	PORTD |= (1<<RS);
+	
+	lcd_bajt(A);
+	lcd_bajt(B);
+	lcd_bajt(C);
+	lcd_bajt(D);
+
+}
+
+int main(void)
+{
+	setup();
+	while(1) loop();
+	return 0;
+}
+
+

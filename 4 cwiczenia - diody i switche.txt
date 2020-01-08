@@ -1,0 +1,32 @@
+#define F_CPU 16000000L
+#include <avr/io.h>
+#include <util/delay.h>
+
+void setup(void)
+{
+	DDRD &= ~(1<<0) & ~(1<<7);//wejscia
+	PORTD = PORTD | (1<<0); //pullup
+	PORTD = PORTD | (1<<7); //s
+	
+	DDRD = DDRD | (1<<1); //wyjscia
+	DDRD = DDRD | (1<<2); //d
+}
+
+void loop(void)
+{
+	if(PIND & 0b00000001 || PIND & 0b10000000)
+	{
+		PORTD = PORTD | (1<<1);
+		PORTD = PORTD | (1<<2);
+	} else {
+		PORTD = PORTD & ~(1<<1);
+		PORTD = PORTD & ~(1<<2);
+	}
+}
+
+int main(void)
+{
+	setup();
+	while(1) loop();
+	return 0;
+}

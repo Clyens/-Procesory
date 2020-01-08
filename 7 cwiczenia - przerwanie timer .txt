@@ -1,0 +1,37 @@
+#define F_CPU 16000000L
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+
+void setup(void)
+{
+	DDRD &= ~(1<<2); //wejscia
+	
+	TCCR1B |= (1<<CS12) | (1<<CS10); //timer clk/1024 - 16ms
+	TIMSK1 |= (1<<TOIE1);
+	
+	DDRD = DDRD | (1<<2); //d
+	
+	sei();
+}
+
+void loop(void)
+{
+	
+}
+
+ISR (TIMER1_OVF_vect)
+{
+	if( PORTD & 0b00000100 ){
+		PORTD &= ~(1<<2);
+	} else {
+		PORTD |= (1<<2);
+	}
+}
+
+int main(void)
+{
+	setup();
+	while(1) loop();
+	return 0;
+}

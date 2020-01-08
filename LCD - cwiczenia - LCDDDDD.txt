@@ -1,0 +1,158 @@
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+#include <avr/pgmspace.h>
+
+//lcd na PORTD
+//linia RS (0 - komendy; 1 - dane)
+//linia RW (0 - zapis do sterownika lcd; 1 - odczyt ze sterownika lcd)
+//linia E (0 - stan idle; 1 - stan aktywny)
+
+#define D7	7
+#define D6	6
+#define D5	5
+#define D4	4
+#define E	3
+#define RW	2
+#define RS	1
+
+void lcd_ini(void);
+void lcd_4bity(unsigned char bajt);
+void lcd_bajt(unsigned char bajt);
+
+
+void lcd_4bity(unsigned char bajt)
+{
+	if(bajt & 0x01)  PORTD |= (1<<D4);  else  PORTD  &= ~(1<<D4);
+	if(bajt & 0x02)  PORTD |= (1<<D5);  else  PORTD  &= ~(1<<D5);
+	if(bajt & 0x04)  PORTD |= (1<<D6);  else  PORTD  &= ~(1<<D6);
+	if(bajt & 0x08)  PORTD |= (1<<D7);  else  PORTD  &= ~(1<<D7);
+	
+}
+
+void lcd_bajt(unsigned char bajt)
+{
+	PORTD |= (1<<E);
+	lcd_4bity(bajt>>4);
+	PORTD  &= ~(1<<E);
+	_delay_us(5);
+	PORTD |= (1<<E);
+	lcd_4bity(bajt);
+	PORTD  &= ~(1<<E);
+	_delay_us(100);
+}
+
+
+void lcd_ini(void)
+{
+	PORTD |= (1<<E);
+	lcd_4bity(0x03);
+	PORTD  &= ~(1<<E);
+	_delay_ms(20);
+	
+	PORTD |= (1<<E);
+	lcd_4bity(0x03);
+	PORTD  &= ~(1<<E);
+	_delay_ms(5);
+	
+	PORTD |= (1<<E);
+	lcd_4bity(0x03);
+	PORTD  &= ~(1<<E);
+	_delay_ms(5);
+	
+	PORTD |= (1<<E);
+	lcd_4bity(0x02);
+	PORTD  &= ~(1<<E);
+	_delay_ms(2);
+	
+	
+	lcd_bajt(0b00101000);//Function set         0b001DNFxx
+	lcd_bajt(0b00010100);//Display cursor shift 0b0001SRxx 
+	lcd_bajt(0b00001100);//Display ON/OFF       0b00001DCB
+	lcd_bajt(0b00000110);//Entry mode set       0b000001IS 
+	lcd_bajt(0b00000001);//Display clear        0b00000001 
+	_delay_ms(2);
+	lcd_bajt(0b10000000);//DDRAM set (kursor)   0b1AAAAAAA
+
+}
+
+
+void setup()
+{
+	//LCD na PORTD
+	DDRD |= (1<<D7)|(1<<D6)|(1<<D5)|(1<<D4)|(1<<E)|(1<<RW)|(1<<RS);
+	PORTD &= ~(1<<D7)& ~(1<<D6)& ~(1<<D5)& ~(1<<D4)& ~(1<<E)& ~(1<<RW)& ~(1<<RS); 
+	_delay_ms(50);
+	lcd_ini();
+	PORTD |= (1<<RS);
+	lcd_bajt('d');
+	
+}
+
+
+
+ /*
+//Przyk³ad 1: znaki ascii
+int main(void)
+{
+	setup();
+	unsigned char a=35;
+	while(1)
+	{
+	lcd_bajt(a);
+	a++;
+	_delay_ms(500);
+	if (a==120) a=35;
+	}
+	return 0;
+}*/
+
+
+
+
+//Przyk³ad 2: tablica w pamiêci RAM
+ char tab_RAM[ ] = "Dzien dobry!";
+int main(void)
+{
+	setup();
+	
+    while(1)
+    {
+	 PORTD &= ~(1<<RS);
+     lcd_bajt(0x80);
+	 
+	 PORTD |= (1<<RS);
+	 char zn;
+	 int i=0;
+	 while(0 != (zn = (tab_RAM[i++])))
+	 lcd_bajt(zn);
+
+    }
+	return 0;
+}
+
+
+
+/*
+Przyk³ad 3: tablica w pamiêci FLASH
+const unsigned char tab_FLASH[] PROGMEM = "tablica w FLASH";
+int main(void)
+{
+	setup();
+	
+	while(1)
+	{
+		PORTD &= ~(1<<RS);
+		lcd_bajt(0x80);
+		
+		PORTD |= (1<<RS);
+		char zn;
+		int i=0;
+		while(0 != (zn = pgm_read_byte(&(tab_FLASH[i++]))))
+		lcd_bajt(zn);
+
+	}
+	return 0;
+}
+*/
